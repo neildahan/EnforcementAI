@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { ChevronDown, Plus, Check } from "lucide-react";
-import { TYPE_META, PRIORITY_META } from "../lib/tokens.js";
+import { TYPE_META, PRIORITY_META, FREQUENCY_OPTIONS } from "../lib/tokens.js";
 import { StatusControl, FrequencyControl } from "./Controls.jsx";
+
+// Show a stored frequency value (key or label, EN/HE) as a Hebrew label when known.
+const FREQ_LABEL = Object.fromEntries(FREQUENCY_OPTIONS.flatMap((f) => [[f.key, f.label], [f.label, f.label]]));
+const freqLabel = (v) => FREQ_LABEL[v] ?? FREQ_LABEL[String(v).toLowerCase()] ?? v;
 
 const btnPrimary = "rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300";
 const btnSuccess = "rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300";
@@ -95,6 +99,12 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
               <div className="flex gap-2">
                 <dt className="font-semibold text-slate-700">אוכלוסיית יעד:</dt>
                 <dd className="text-slate-500">{item.audience}</dd>
+              </div>
+            )}
+            {item.frequency && item.frequency !== "NeedsReview" && (
+              <div className="flex gap-2">
+                <dt className="font-semibold text-slate-700">תדירות:</dt>
+                <dd className="text-slate-500">{freqLabel(item.frequency)}</dd>
               </div>
             )}
             {item.dueDate && (
