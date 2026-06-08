@@ -9,19 +9,35 @@ How to publish updates to Power Platform after you change the code.
 
 ## ⚡ TL;DR — every time you have changes
 
-Open Terminal and run these four lines:
+Open Terminal and run these lines:
 
 ```bash
 cd ~/Documents/Projects/ComplianceAgentDashboard
 nvm use 22
+
+# 1. SAVE your code to GitHub (history / backup)
+git add -A
+git commit -m "describe what you changed"
+git push
+
+# 2. PUBLISH the update to the live app
 npm run build
 pac code push
 ```
 
-When it finishes you'll see **"App pushed successfully. You can play your app at https://…"**.
+When the push finishes you'll see **"App pushed successfully. You can play your app at https://…"**.
 Open that URL (or refresh the app you already have open) to see the changes.
 
 That's it. 95% of the time this is all you need.
+
+### Two separate "pushes" — keep them straight
+
+| Command | Where it goes | What it does |
+|---|---|---|
+| `git push` | **GitHub** (https://github.com/neildahan/EnforcementAI) | Saves/versions your code. Does **not** change the live app. |
+| `pac code push` | **Power Platform** | Publishes the live app users see. Does **not** touch GitHub. |
+
+You can do one without the other (e.g. commit work-in-progress to GitHub without deploying). Usually you do both.
 
 ---
 
