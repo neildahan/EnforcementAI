@@ -84,7 +84,17 @@ export default function EnforcementDashboard() {
     }
   };
 
-  const addNote = () => setToast("ההערה נשמרה");
+  const addNote = async (item, text) => {
+    setError("");
+    setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, notes: text } : x)));
+    try {
+      await dataverseService.saveNote(item, text);
+      setToast("ההערה נשמרה");
+    } catch (e) {
+      setError(e?.message || String(e));
+      load();
+    }
+  };
   const skipItem = () => setToast("המשימה דולגה");
 
   const saveEdits = async (item, edits) => {

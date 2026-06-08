@@ -47,9 +47,7 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
 
   const stop = (e) => e.stopPropagation();
   const saveNote = () => {
-    if (!note.trim()) return;
     onNote?.(item, note.trim());
-    setNote("");
     setNoteOpen(false);
   };
 
@@ -204,12 +202,15 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
             )}
           </dl>
 
+          {item.notes && !noteOpen && (
+            <div className="mt-3 rounded-lg bg-slate-50 p-2.5 text-sm text-slate-600 whitespace-pre-wrap">{item.notes}</div>
+          )}
           {noteOpen ? (
             <div className="mt-3">
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                rows={2}
+                rows={3}
                 placeholder="כתוב הערה…"
                 className="w-full rounded-lg border border-slate-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
               />
@@ -219,8 +220,8 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
               </div>
             </div>
           ) : (
-            <button onClick={() => setNoteOpen(true)} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 cursor-pointer hover:text-indigo-700">
-              <Plus className="h-4 w-4" aria-hidden /> הוסף הערה
+            <button onClick={() => { setNote(item.notes || ""); setNoteOpen(true); }} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 cursor-pointer hover:text-indigo-700">
+              <Plus className="h-4 w-4" aria-hidden /> {item.notes ? "ערוך הערה" : "הוסף הערה"}
             </button>
           )}
 

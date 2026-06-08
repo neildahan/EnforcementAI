@@ -25,6 +25,7 @@ export const ENTITY_CONTRACT = {
       status: "hl_itemstatus",     // text → normStatus()
       taskType: "hl_tasktype",     // Choice (training/control/reminder/report) → normType()
       dueDate: "hl_duedate",       // Date (מועד יעד) → past + not done ⇒ overdue
+      notes: "hl_notes",           // Multiline text — officer notes
     },
     lookups: {
       control: "hl_controlref",    // → hl_corporategovernancecompliance
@@ -135,6 +136,7 @@ export function fromDataverse(item, control = {}, workPlan = {}) {
     year: workPlan[W.year] ?? null,
     frequency: normFrequency(control[C.frequency]),
     dueDate: toDateStr(item[I.dueDate]),
+    notes: item[I.notes] || "",
     regulatoryBasis: basis,
     sourceLaw: control[C.sourceLaw] || "",        // raw, for editing
     sourceSection: control[C.sourceSection] || "", // raw, for editing
@@ -175,6 +177,10 @@ const mock = {
     await wait(250);
     return { id: item.id, edits };
   },
+  async saveNote(item, text) {
+    await wait(200);
+    return { id: item.id, text };
+  },
   // Ask-before-replace: first call replace=false; if result==="exists" the UI
   // confirms, then calls again with replace=true.
   async regenerateWorkPlan({ year, replace }) {
@@ -198,7 +204,8 @@ const SET = {
   control: ENTITY_CONTRACT.control.set,          // hl_corporategovernancecompliances
   workPlan: ENTITY_CONTRACT.workPlan.set,        // hl_workplans
 };
-const SEL_ITEM = "hl_workplanitemid,hl_name,hl_controltitle,hl_priority,hl_quarter,hl_itemstatus,hl_tasktype,hl_duedate,_hl_controlref_value,_hl_workplanref_value";
+// WorkPlanItem: no $select (fetch all columns) so optional fields like hl_notes
+// don't break reads if a column isn't present yet.
 const SEL_CONTROL = "hl_corporategovernancecomplianceid,hl_compliancetitle,hl_legalrequirementdescription,hl_recommendedcontrolmeasures,hl_sourcelaw,hl_sourcesection,hl_reviewfrequency,hl_residualrisklevel,hl_responsibleparty";
 const SEL_WP = "hl_workplanid,hl_year,hl_name,hl_status";
 
@@ -239,7 +246,7 @@ async function patchItem(id, item) {
 const live = {
   async getWorkPlanItems({ year }) {
     const [items, controls, plans] = await Promise.all([
-      listAll(SET.item, SEL_ITEM),
+      listAll(SET.item),
       listAll(SET.control, SEL_CONTROL),
       listAll(SET.workPlan, SEL_WP),
     ]);
@@ -291,6 +298,11 @@ const live = {
       const r = await DV.UpdateRecordWithOrganization("return=representation", "application/json", o, SET.control, item.controlId, controlPatch);
       if (!r?.success) throw r?.error ?? new Error("Save control fields failed");
     }
+    return { id: item.id };
+  },
+
+  async saveNote(item, text) {
+    await patchItem(item.id, { [ENTITY_CONTRACT.workPlanItem.fields.notes]: text || null });
     return { id: item.id };
   },
 
