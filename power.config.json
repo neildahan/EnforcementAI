@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "appId": "2c96f411-f77b-4d27-9675-f6f13a59fbdb",
+  "appDisplayName": "Enforcement AI",
+  "region": "prod",
+  "environmentId": "63fcc7cb-6bed-e98f-b9b4-8fdc3607ce58",
+  "description": " ",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {},
+  "databaseReferences": {}
+}

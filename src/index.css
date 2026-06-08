@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: 'Rubik', system-ui, -apple-system, sans-serif;
+}
+
+@utility shadow-card {
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
+}
+@utility shadow-card-lg {
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.06), 0 14px 32px rgba(16, 24, 40, 0.09);
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-card-in {
+  animation: card-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-card-in { animation: none; }
+}

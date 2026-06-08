@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+dist-ssr/
+
+# local env — never commit secrets / connection strings
+.env
+.env.local
+.env.*.local
+
+# editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+
+# ── RED LINE: never commit real client data ─────────────────────────────────
+# This is a regulated compliance product. No real survey/enforcement files,
+# no client records. Develop on the mock or a synthetic sandbox only.
+/client-data/
+/data/
+*.client.*
+*.survey.*
+*.enforcement.*
+*.xlsx
+*.pdf
