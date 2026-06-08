@@ -1,18 +1,21 @@
 import { useState } from "react";
-import { ChevronDown, Plus, Check } from "lucide-react";
-import { TYPE_META, PRIORITY_META, FREQUENCY_OPTIONS } from "../lib/tokens.js";
+import { ChevronDown, Plus, Check, Pencil } from "lucide-react";
+import { TYPE_META, PRIORITY_META, FREQUENCY_OPTIONS, QUARTERS, TYPE_FILTERS } from "../lib/tokens.js";
 import { StatusControl, FrequencyControl } from "./Controls.jsx";
 
 // Show a stored frequency value (key or label, EN/HE) as a Hebrew label when known.
 const FREQ_LABEL = Object.fromEntries(FREQUENCY_OPTIONS.flatMap((f) => [[f.key, f.label], [f.label, f.label]]));
 const freqLabel = (v) => FREQ_LABEL[v] ?? FREQ_LABEL[String(v).toLowerCase()] ?? v;
 
+const inputCls = "w-full rounded-lg border border-slate-200 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300";
+const fieldLabel = "mb-1 block text-xs font-semibold text-slate-600";
+
 const btnPrimary = "rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300";
 const btnSuccess = "rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300";
 const btnSuccessSoft = "rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 cursor-pointer hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300";
 const btnGhost = "rounded-lg px-3 py-1.5 text-sm text-slate-400 cursor-pointer hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300";
 
-export default function TaskCard({ item, busy, index = 0, late = false, onChangeStatus, onSetFrequency, onNote, onSkip }) {
+export default function TaskCard({ item, busy, index = 0, late = false, onChangeStatus, onSetFrequency, onNote, onSkip, onSaveEdits }) {
   const t = TYPE_META[item.type];
   const p = PRIORITY_META[item.priority];
   const TypeIcon = t.Icon;
@@ -21,6 +24,26 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
   const [open, setOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(null);
+
+  const startEdit = () => {
+    setForm({
+      title: item.title || "",
+      description: item.description || "",
+      priority: item.priority || "medium",
+      type: item.type || "control",
+      quarter: item.quarter || "",
+      frequency: item.frequency && item.frequency !== "NeedsReview" ? item.frequency : "",
+      dueDate: item.dueDate || "",
+      sourceLaw: item.sourceLaw || "",
+      sourceSection: item.sourceSection || "",
+      audience: item.audience || "",
+    });
+    setEditing(true);
+  };
+  const setF = (k, v) => setForm((p2) => ({ ...p2, [k]: v }));
+  const submitEdits = () => { onSaveEdits?.(item, form); setEditing(false); };
 
   const stop = (e) => e.stopPropagation();
   const saveNote = () => {
@@ -88,6 +111,72 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
 
       {open && (
         <div className="border-t border-slate-100 px-4 py-3.5">
+          {editing ? (
+            <form onSubmit={(e) => { e.preventDefault(); submitEdits(); }} className="space-y-3">
+              <label className="block">
+                <span className={fieldLabel}>כותרת</span>
+                <input value={form.title} onChange={(e) => setF("title", e.target.value)} className={inputCls} />
+              </label>
+              <label className="block">
+                <span className={fieldLabel}>תיאור</span>
+                <textarea value={form.description} onChange={(e) => setF("description", e.target.value)} rows={2} className={inputCls} />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className={fieldLabel}>עדיפות</span>
+                  <select value={form.priority} onChange={(e) => setF("priority", e.target.value)} className={inputCls}>
+                    {Object.entries(PRIORITY_META).map(([k, v]) => <option key={k} value={k}>{v.short}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className={fieldLabel}>סוג</span>
+                  <select value={form.type} onChange={(e) => setF("type", e.target.value)} className={inputCls}>
+                    {TYPE_FILTERS.filter((tf) => tf.key !== "all").map((tf) => <option key={tf.key} value={tf.key}>{tf.label}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className={fieldLabel}>רבעון</span>
+                  <select value={form.quarter} onChange={(e) => setF("quarter", e.target.value)} className={inputCls}>
+                    <option value="">— ללא —</option>
+                    {QUARTERS.map((qq) => <option key={qq} value={qq}>{qq}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className={fieldLabel}>תדירות</span>
+                  <select value={form.frequency} onChange={(e) => setF("frequency", e.target.value)} className={inputCls}>
+                    <option value="">— ללא —</option>
+                    {FREQUENCY_OPTIONS.map((f) => <option key={f.key} value={f.label}>{f.label}</option>)}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className={fieldLabel}>מועד יעד</span>
+                  <input type="date" value={form.dueDate} onChange={(e) => setF("dueDate", e.target.value)} className={inputCls} />
+                </label>
+                <label className="block">
+                  <span className={fieldLabel}>אוכלוסיית יעד</span>
+                  <input value={form.audience} onChange={(e) => setF("audience", e.target.value)} className={inputCls} />
+                </label>
+                <label className="block">
+                  <span className={fieldLabel}>חוק</span>
+                  <input value={form.sourceLaw} onChange={(e) => setF("sourceLaw", e.target.value)} className={inputCls} />
+                </label>
+                <label className="block">
+                  <span className={fieldLabel}>סעיף</span>
+                  <input value={form.sourceSection} onChange={(e) => setF("sourceSection", e.target.value)} className={inputCls} />
+                </label>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button type="submit" className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white cursor-pointer hover:bg-indigo-700">שמירה</button>
+                <button type="button" onClick={() => setEditing(false)} className="rounded-md px-3 py-1.5 text-xs text-slate-500 cursor-pointer hover:text-slate-700">ביטול</button>
+              </div>
+            </form>
+          ) : (
+          <>
+          <div className="mb-2 flex justify-end">
+            <button onClick={startEdit} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 cursor-pointer hover:bg-slate-100 hover:text-slate-700">
+              <Pencil className="h-3.5 w-3.5" aria-hidden /> ערוך
+            </button>
+          </div>
           <dl className="space-y-2 text-sm">
             {item.regulatoryBasis && (
               <div className="flex gap-2">
@@ -156,6 +245,8 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
                 </span>
               )}
             </div>
+          )}
+          </>
           )}
         </div>
       )}

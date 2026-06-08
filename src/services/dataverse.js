@@ -96,6 +96,9 @@ const TYPE_CODE = {
   123080004: "report",
 };
 
+// Reverse of TYPE_CODE: UI key → option code (for writing the Choice back).
+const TYPE_CODE_REVERSE = Object.fromEntries(Object.entries(TYPE_CODE).map(([code, key]) => [key, Number(code)]));
+
 // Accepts either the Choice label (EN/HE) or the raw option code.
 export function normType(v) {
   if (v != null && TYPE_CODE[v]) return TYPE_CODE[v];
@@ -133,6 +136,8 @@ export function fromDataverse(item, control = {}, workPlan = {}) {
     frequency: normFrequency(control[C.frequency]),
     dueDate: toDateStr(item[I.dueDate]),
     regulatoryBasis: basis,
+    sourceLaw: control[C.sourceLaw] || "",        // raw, for editing
+    sourceSection: control[C.sourceSection] || "", // raw, for editing
     audience: control[C.responsibleParty] || "",
   };
 }
@@ -165,6 +170,10 @@ const mock = {
   async setFrequency(item, freq, quarter) {
     await wait(250);
     return { id: item.id, freq, quarter };
+  },
+  async saveEdits(item, edits) {
+    await wait(250);
+    return { id: item.id, edits };
   },
   // Ask-before-replace: first call replace=false; if result==="exists" the UI
   // confirms, then calls again with replace=true.
@@ -256,6 +265,33 @@ const live = {
     }
     await patchItem(item.id, { [ENTITY_CONTRACT.workPlanItem.fields.quarter]: quarter });
     return { id: item.id, freq, quarter };
+  },
+
+  // Edit any card parameters: item fields → WorkPlanItem, descriptive fields → Control.
+  async saveEdits(item, edits) {
+    const I = ENTITY_CONTRACT.workPlanItem.fields;
+    const C = ENTITY_CONTRACT.control.fields;
+    const itemPatch = {};
+    if (edits.title !== undefined) itemPatch[I.title] = edits.title;
+    if (edits.priority !== undefined) itemPatch[I.priority] = edits.priority;
+    if (edits.quarter !== undefined) itemPatch[I.quarter] = edits.quarter || null;
+    if (edits.dueDate !== undefined) itemPatch[I.dueDate] = edits.dueDate || null;
+    if (edits.type !== undefined) itemPatch[I.taskType] = TYPE_CODE_REVERSE[edits.type] ?? null;
+    const controlPatch = {};
+    if (edits.description !== undefined) controlPatch[C.description] = edits.description;
+    if (edits.audience !== undefined) controlPatch[C.responsibleParty] = edits.audience;
+    if (edits.frequency !== undefined) controlPatch[C.frequency] = edits.frequency;
+    if (edits.sourceLaw !== undefined) controlPatch[C.sourceLaw] = edits.sourceLaw;
+    if (edits.sourceSection !== undefined) controlPatch[C.sourceSection] = edits.sourceSection;
+
+    if (Object.keys(itemPatch).length) await patchItem(item.id, itemPatch);
+    if (item.controlId && Object.keys(controlPatch).length) {
+      const DV = await dv();
+      const o = await org();
+      const r = await DV.UpdateRecordWithOrganization("return=representation", "application/json", o, SET.control, item.controlId, controlPatch);
+      if (!r?.success) throw r?.error ?? new Error("Save control fields failed");
+    }
+    return { id: item.id };
   },
 
   // GenerateWorkPlan is a Copilot Studio TOPIC (not a direct connector op). Not

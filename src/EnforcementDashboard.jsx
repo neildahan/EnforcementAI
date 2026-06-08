@@ -87,6 +87,31 @@ export default function EnforcementDashboard() {
   const addNote = () => setToast("ההערה נשמרה");
   const skipItem = () => setToast("המשימה דולגה");
 
+  const saveEdits = async (item, edits) => {
+    setError("");
+    setItems((prev) => prev.map((x) => (x.id === item.id ? {
+      ...x,
+      title: edits.title,
+      description: edits.description,
+      priority: edits.priority,
+      type: edits.type,
+      quarter: edits.quarter || null,
+      frequency: edits.frequency || x.frequency,
+      dueDate: edits.dueDate || null,
+      audience: edits.audience,
+      sourceLaw: edits.sourceLaw,
+      sourceSection: edits.sourceSection,
+      regulatoryBasis: [edits.sourceLaw, edits.sourceSection].filter(Boolean).join(" "),
+    } : x)));
+    try {
+      await dataverseService.saveEdits(item, edits);
+      setToast("הפרטים נשמרו");
+    } catch (e) {
+      setError(e?.message || String(e));
+      load();
+    }
+  };
+
   const setFrequency = async (item, freq) => {
     const targetQ = quarter === "all" ? "Q1" : quarter;
     setError("");
@@ -166,7 +191,7 @@ export default function EnforcementDashboard() {
               </div>
               <div className="space-y-3">
                 {lateVisible.map((item, idx) => (
-                  <TaskCard key={item.id} item={item} index={idx} late busy={busyId === item.id} onChangeStatus={(s) => changeStatus(item, s)} onNote={addNote} onSkip={skipItem} />
+                  <TaskCard key={item.id} item={item} index={idx} late busy={busyId === item.id} onChangeStatus={(s) => changeStatus(item, s)} onNote={addNote} onSkip={skipItem} onSaveEdits={saveEdits} />
                 ))}
               </div>
             </div>
@@ -179,7 +204,7 @@ export default function EnforcementDashboard() {
               </div>
               <div className="space-y-3">
                 {unscheduledShown.map((item, idx) => (
-                  <TaskCard key={item.id} item={item} index={idx} onSetFrequency={(f) => setFrequency(item, f)} onNote={addNote} />
+                  <TaskCard key={item.id} item={item} index={idx} onSetFrequency={(f) => setFrequency(item, f)} onNote={addNote} onSaveEdits={saveEdits} />
                 ))}
               </div>
             </div>
@@ -203,7 +228,7 @@ export default function EnforcementDashboard() {
             </div>
           ) : (
             onTimeVisible.map((item, idx) => (
-              <TaskCard key={item.id} item={item} index={idx} busy={busyId === item.id} onChangeStatus={(s) => changeStatus(item, s)} onNote={addNote} onSkip={skipItem} />
+              <TaskCard key={item.id} item={item} index={idx} busy={busyId === item.id} onChangeStatus={(s) => changeStatus(item, s)} onNote={addNote} onSkip={skipItem} onSaveEdits={saveEdits} />
             ))
           )}
         </div>
