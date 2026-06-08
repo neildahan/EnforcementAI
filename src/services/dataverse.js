@@ -178,56 +178,74 @@ const mock = {
 };
 
 /* --------------------------------- live ------------------------------------ *
- *  Wire to the generated services after:
- *    pac code add-data-source -a shared_commondataserviceforapps -c <conn> -t hl_workplanitem
- *    pac code add-data-source -a shared_commondataserviceforapps -c <conn> -t hl_corporategovernancecompliance
- *    pac code add-data-source -a shared_commondataserviceforapps -c <conn> -t hl_workplan
- *
- *  The mapping/normalization is already done by fromDataverse() above, so the
- *  only thing to plug here is the generated read/update calls. Reading expands
- *  the two lookups so the Control + WorkPlan fields come back in one query.
- *  CONFIRM the $expand navigation-property names against the generated model
- *  (they are usually the relationship's referencing nav prop, e.g. "hl_ControlRef").
- *
- *  import { hl_workplanitemService } from "../generated/services/hl_workplanitemService";
- *  const WPI = ENTITY_CONTRACT.workPlanItem;
- *
- *  const CONTROL_NAV  = "hl_ControlRef";   // ← confirm in generated model
- *  const WORKPLAN_NAV = "hl_WorkPlanRef";  // ← confirm in generated model
- *
- *  const live = {
- *    async getWorkPlanItems({ year }) {
- *      const res = await hl_workplanitemService.getAll({
- *        expand: [CONTROL_NAV, WORKPLAN_NAV],
- *        // optional server-side filter by year via the expanded WorkPlan:
- *        // filter: `${WORKPLAN_NAV}/${ENTITY_CONTRACT.workPlan.fields.year} eq ${year}`,
- *      });
- *      return res.data
- *        .map((r) => fromDataverse(r, r[CONTROL_NAV] ?? {}, r[WORKPLAN_NAV] ?? {}))
- *        .filter((x) => x.year == null || x.year === year);
- *    },
- *
- *    async updateItemStatus(id, status) {
- *      // status is the UI key (todo/in_progress/done). If the column stores
- *      // human-readable text, map back here to your flow's vocabulary.
- *      return hl_workplanitemService.update(id, { [WPI.fields.status]: status });
- *    },
- *
- *    async scheduleItem(id, quarter) {
- *      return hl_workplanitemService.update(id, { [WPI.fields.quarter]: quarter });
- *    },
- *
- *    // GenerateWorkPlan is a Copilot Studio TOPIC — trigger it via the agent
- *    // (Direct Line) or a bound action. Ask-before-replace: replace=false first;
- *    // if result==="exists" the UI confirms, then calls again with replace=true.
- *    async regenerateWorkPlan({ year, replace }) {
- *      return askAgentTriggerGenerateWorkPlan({ year, replace }); // → { result }
- *    },
- *
- *    async askAgent(message) {
- *      return directLine.send(message); // Copilot agent "סוכן ציות חכם"
- *    },
- *  };
- */
+ *  Real Dataverse access via the generated connector service
+ *  (src/generated/services/MicrosoftDataverseService — from pac code add-data-source).
+ *  Loaded lazily so local/dev (mock) never pulls the Power runtime client.
+ *  Reads the 3 tables and joins WorkPlanItem → Control / WorkPlan in JS, then
+ *  maps each row through fromDataverse(). Only runs inside the Power Apps host. */
+const SET = {
+  item: ENTITY_CONTRACT.workPlanItem.set,       // hl_workplanitems
+  control: ENTITY_CONTRACT.control.set,          // hl_corporategovernancecompliances
+  workPlan: ENTITY_CONTRACT.workPlan.set,        // hl_workplans
+};
+const SEL_ITEM = "hl_workplanitemid,hl_name,hl_controltitle,hl_priority,hl_quarter,hl_itemstatus,hl_tasktype,hl_duedate,_hl_controlref_value,_hl_workplanref_value";
+const SEL_CONTROL = "hl_corporategovernancecomplianceid,hl_compliancetitle,hl_legalrequirementdescription,hl_recommendedcontrolmeasures,hl_sourcelaw,hl_sourcesection,hl_reviewfrequency,hl_residualrisklevel,hl_responsibleparty";
+const SEL_WP = "hl_workplanid,hl_year,hl_name,hl_status";
 
-export const dataverseService = USE_MOCK ? mock : mock; // ← replace right side with `live`
+// Status write-back: UI key → human-readable text (round-trips via normStatus).
+const STATUS_WRITE = { todo: "Not Started", in_progress: "In Progress", done: "Completed" };
+
+let _DV;
+async function dv() {
+  if (!_DV) _DV = (await import("../generated/services/MicrosoftDataverseService")).MicrosoftDataverseService;
+  return _DV;
+}
+async function listAll(set, select) {
+  const DV = await dv();
+  const res = await DV.ListRecords(set, undefined, undefined, false, select);
+  if (!res?.success) throw res?.error ?? new Error(`ListRecords ${set} failed`);
+  return res.data?.value ?? [];
+}
+async function patchItem(id, item) {
+  const DV = await dv();
+  const res = await DV.UpdateRecord("return=representation", "application/json", SET.item, id, item);
+  if (!res?.success) throw res?.error ?? new Error("UpdateRecord failed");
+  return res;
+}
+
+const live = {
+  async getWorkPlanItems({ year }) {
+    const [items, controls, plans] = await Promise.all([
+      listAll(SET.item, SEL_ITEM),
+      listAll(SET.control, SEL_CONTROL),
+      listAll(SET.workPlan, SEL_WP),
+    ]);
+    const cById = Object.fromEntries(controls.map((c) => [c[ENTITY_CONTRACT.control.id], c]));
+    const pById = Object.fromEntries(plans.map((p) => [p[ENTITY_CONTRACT.workPlan.id], p]));
+    return items
+      .map((it) => fromDataverse(it, cById[it._hl_controlref_value] ?? {}, pById[it._hl_workplanref_value] ?? {}))
+      .filter((x) => year == null || x.year == null || x.year === year);
+  },
+
+  async updateItemStatus(id, status) {
+    await patchItem(id, { [ENTITY_CONTRACT.workPlanItem.fields.status]: STATUS_WRITE[status] ?? status });
+    return { id, status };
+  },
+
+  async scheduleItem(id, quarter) {
+    await patchItem(id, { [ENTITY_CONTRACT.workPlanItem.fields.quarter]: quarter });
+    return { id, quarter };
+  },
+
+  // GenerateWorkPlan is a Copilot Studio TOPIC (not a direct connector op). Not
+  // wired yet — this is a harmless no-op so the refresh button doesn't error.
+  async regenerateWorkPlan() {
+    return { result: "noop" };
+  },
+
+  async askAgent() {
+    return { reply: "הסוכן עדיין אינו מחובר ל-Code App." };
+  },
+};
+
+export const dataverseService = USE_MOCK ? mock : live;
