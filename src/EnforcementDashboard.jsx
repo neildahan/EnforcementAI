@@ -16,14 +16,22 @@ export default function EnforcementDashboard() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [toast, setToast] = useState("");
+  const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [regenBusy, setRegenBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const data = await dataverseService.getWorkPlanItems({ year, quarter });
-    setItems(data);
-    setLoading(false);
+    setError("");
+    try {
+      const data = await dataverseService.getWorkPlanItems({ year, quarter });
+      setItems(data);
+    } catch (e) {
+      setError(e?.message || String(e));
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   }, [year, quarter]);
 
   useEffect(() => { load(); }, [load]);
@@ -129,6 +137,13 @@ export default function EnforcementDashboard() {
         </div>
 
         <div className="px-8 pb-10 space-y-3">
+          {error && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              <div className="mb-1 font-semibold">שגיאה בטעינת הנתונים מ-Dataverse</div>
+              <div dir="ltr" className="break-all font-mono text-xs text-rose-600">{error}</div>
+            </div>
+          )}
+
           {lateVisible.length > 0 && (
             <div className="rounded-2xl border border-rose-200/70 bg-rose-50/50 p-2.5">
               <div className="px-1.5 pb-2 text-xs font-semibold text-rose-700 flex items-center gap-1.5">

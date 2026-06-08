@@ -195,20 +195,33 @@ const SEL_WP = "hl_workplanid,hl_year,hl_name,hl_status";
 // Status write-back: UI key → human-readable text (round-trips via normStatus).
 const STATUS_WRITE = { todo: "Not Started", in_progress: "In Progress", done: "Completed" };
 
-let _DV;
+let _DV, _ORG;
 async function dv() {
   if (!_DV) _DV = (await import("../generated/services/MicrosoftDataverseService")).MicrosoftDataverseService;
   return _DV;
 }
+// The Dataverse connector needs the org URL explicitly; resolve it once (portable
+// across environments — no hardcoding).
+async function org() {
+  if (_ORG) return _ORG;
+  const DV = await dv();
+  const res = await DV.GetOrganizations();
+  if (!res?.success) throw res?.error ?? new Error("GetOrganizations failed");
+  _ORG = res.data?.value?.[0]?.Url;
+  if (!_ORG) throw new Error("No organization URL resolved from the connection");
+  return _ORG;
+}
 async function listAll(set, select) {
   const DV = await dv();
-  const res = await DV.ListRecords(set, undefined, undefined, false, select);
+  const o = await org();
+  const res = await DV.ListRecordsWithOrganization(o, set, undefined, undefined, false, false, select);
   if (!res?.success) throw res?.error ?? new Error(`ListRecords ${set} failed`);
   return res.data?.value ?? [];
 }
 async function patchItem(id, item) {
   const DV = await dv();
-  const res = await DV.UpdateRecord("return=representation", "application/json", SET.item, id, item);
+  const o = await org();
+  const res = await DV.UpdateRecordWithOrganization("return=representation", "application/json", o, SET.item, id, item);
   if (!res?.success) throw res?.error ?? new Error("UpdateRecord failed");
   return res;
 }
