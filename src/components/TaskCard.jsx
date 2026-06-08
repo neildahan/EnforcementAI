@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { ChevronDown, Plus, Check } from "lucide-react";
 import { TYPE_META, PRIORITY_META } from "../lib/tokens.js";
-import { StatusControl } from "./Controls.jsx";
+import { StatusControl, FrequencyControl } from "./Controls.jsx";
 
 const btnPrimary = "rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300";
 const btnSuccess = "rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300";
 const btnSuccessSoft = "rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 cursor-pointer hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300";
 const btnGhost = "rounded-lg px-3 py-1.5 text-sm text-slate-400 cursor-pointer hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300";
 
-export default function TaskCard({ item, busy, index = 0, late = false, onChangeStatus, onSchedule, onNote, onSkip }) {
+export default function TaskCard({ item, busy, index = 0, late = false, onChangeStatus, onSetFrequency, onNote, onSkip }) {
   const t = TYPE_META[item.type];
   const p = PRIORITY_META[item.priority];
   const TypeIcon = t.Icon;
@@ -66,12 +66,7 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
 
         <span onClick={stop} className="shrink-0">
           {unscheduled ? (
-            <button
-              onClick={onSchedule}
-              className="rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white cursor-pointer hover:bg-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-            >
-              קבע תדירות
-            </button>
+            <FrequencyControl onSelect={(f) => onSetFrequency(f)} />
           ) : (
             <StatusControl status={item.status} busy={busy} onChange={(s) => onChangeStatus(s)} />
           )}

@@ -27,6 +27,15 @@ export const QUARTERS = ["Q1", "Q2", "Q3", "Q4"];
 
 export const YEARS = [2024, 2025, 2026, 2027];
 
+// Stored as free text in the Control's hl_reviewfrequency (the label is written).
+export const FREQUENCY_OPTIONS = [
+  { key: "daily", label: "יומי" },
+  { key: "weekly", label: "שבועי" },
+  { key: "monthly", label: "חודשי" },
+  { key: "quarterly", label: "רבעוני" },
+  { key: "annual", label: "שנתי" },
+];
+
 export const TYPE_FILTERS = [
   { key: "all", label: "הכל" },
   { key: "training", label: "הדרכה" },

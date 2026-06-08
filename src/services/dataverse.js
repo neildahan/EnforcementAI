@@ -122,6 +122,7 @@ export function fromDataverse(item, control = {}, workPlan = {}) {
   const basis = [control[C.sourceLaw], control[C.sourceSection]].filter(Boolean).join(" ");
   return {
     id: item[ENTITY_CONTRACT.workPlanItem.id],
+    controlId: item._hl_controlref_value ?? null, // for writing frequency back to the Control
     title: item[I.title] || item[I.name] || control[C.title] || "",
     description: control[C.description] || control[C.controlMeasures] || "",
     type: normType(item[I.taskType]),
@@ -161,9 +162,9 @@ const mock = {
     await wait(250);
     return { id, status };
   },
-  async scheduleItem(id, quarter) {
+  async setFrequency(item, freq, quarter) {
     await wait(250);
-    return { id, quarter };
+    return { id: item.id, freq, quarter };
   },
   // Ask-before-replace: first call replace=false; if result==="exists" the UI
   // confirms, then calls again with replace=true.
@@ -245,9 +246,16 @@ const live = {
     return { id, status };
   },
 
-  async scheduleItem(id, quarter) {
-    await patchItem(id, { [ENTITY_CONTRACT.workPlanItem.fields.quarter]: quarter });
-    return { id, quarter };
+  // Set the review frequency on the linked Control, then schedule the item into a quarter.
+  async setFrequency(item, freq, quarter) {
+    const DV = await dv();
+    const o = await org();
+    if (item.controlId) {
+      const r = await DV.UpdateRecordWithOrganization("return=representation", "application/json", o, SET.control, item.controlId, { [ENTITY_CONTRACT.control.fields.frequency]: freq });
+      if (!r?.success) throw r?.error ?? new Error("Set frequency failed");
+    }
+    await patchItem(item.id, { [ENTITY_CONTRACT.workPlanItem.fields.quarter]: quarter });
+    return { id: item.id, freq, quarter };
   },
 
   // GenerateWorkPlan is a Copilot Studio TOPIC (not a direct connector op). Not

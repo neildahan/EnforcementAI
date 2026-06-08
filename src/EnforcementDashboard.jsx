@@ -69,21 +69,35 @@ export default function EnforcementDashboard() {
   };
 
   const changeStatus = async (item, next) => {
+    const prevStatus = item.status;
     setBusyId(item.id);
+    setError("");
     setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, status: next } : x))); // optimistic
-    await dataverseService.updateItemStatus(item.id, next);
-    setBusyId(null);
-    setToast("נשמר ב-Dataverse");
+    try {
+      await dataverseService.updateItemStatus(item.id, next);
+      setToast("נשמר ב-Dataverse");
+    } catch (e) {
+      setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, status: prevStatus } : x))); // revert
+      setError(e?.message || String(e));
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const addNote = () => setToast("ההערה נשמרה");
   const skipItem = () => setToast("המשימה דולגה");
 
-  const scheduleItem = async (item) => {
+  const setFrequency = async (item, freq) => {
     const targetQ = quarter === "all" ? "Q1" : quarter;
-    setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, quarter: targetQ, frequency: "quarterly" } : x)));
-    await dataverseService.scheduleItem(item.id, targetQ);
-    setToast(`שובץ ל-${targetQ}`);
+    setError("");
+    setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, quarter: targetQ, frequency: freq.label } : x)));
+    try {
+      await dataverseService.setFrequency(item, freq.label, targetQ);
+      setToast(`נקבעה תדירות: ${freq.label}`);
+    } catch (e) {
+      setError(e?.message || String(e));
+      load();
+    }
   };
 
   const regenerate = async () => {
@@ -165,7 +179,7 @@ export default function EnforcementDashboard() {
               </div>
               <div className="space-y-3">
                 {unscheduledShown.map((item, idx) => (
-                  <TaskCard key={item.id} item={item} index={idx} onSchedule={() => scheduleItem(item)} onNote={addNote} />
+                  <TaskCard key={item.id} item={item} index={idx} onSetFrequency={(f) => setFrequency(item, f)} onNote={addNote} />
                 ))}
               </div>
             </div>

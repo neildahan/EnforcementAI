@@ -1,6 +1,49 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Circle, RefreshCw, Check } from "lucide-react";
-import { QUARTERS, YEARS, STATUS_META, STATUS_ORDER, TYPE_FILTERS } from "../lib/tokens.js";
+import { QUARTERS, YEARS, STATUS_META, STATUS_ORDER, TYPE_FILTERS, FREQUENCY_OPTIONS } from "../lib/tokens.js";
+
+export function FrequencyControl({ onSelect }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1 rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white cursor-pointer hover:bg-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+      >
+        קבע תדירות
+        <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+      </button>
+      {open && (
+        <ul role="listbox" aria-label="בחירת תדירות" className="absolute left-0 z-30 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+          {FREQUENCY_OPTIONS.map((f) => (
+            <li key={f.key}>
+              <button
+                role="option"
+                aria-selected={false}
+                onClick={() => { setOpen(false); onSelect(f); }}
+                className="flex w-full items-center px-3 py-1.5 text-xs text-slate-600 cursor-pointer hover:bg-slate-50"
+              >
+                {f.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export function YearSelect({ year, setYear }) {
   const [open, setOpen] = useState(false);
