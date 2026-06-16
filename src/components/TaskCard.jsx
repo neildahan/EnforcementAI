@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Plus, Check, Pencil } from "lucide-react";
 import { TYPE_META, PRIORITY_META, FREQUENCY_OPTIONS, QUARTERS, TYPE_FILTERS } from "../lib/tokens.js";
 import { StatusControl, FrequencyControl } from "./Controls.jsx";
@@ -7,25 +7,37 @@ import { StatusControl, FrequencyControl } from "./Controls.jsx";
 const FREQ_LABEL = Object.fromEntries(FREQUENCY_OPTIONS.flatMap((f) => [[f.key, f.label], [f.label, f.label]]));
 const freqLabel = (v) => FREQ_LABEL[v] ?? FREQ_LABEL[String(v).toLowerCase()] ?? v;
 
-const inputCls = "w-full rounded-lg border border-slate-200 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300";
+const inputCls = "w-full rounded-lg border border-slate-200 px-2 py-1 text-sm focus:outline-none focus:border-marine-400 focus:ring-[3px] focus:ring-marine-50";
 const fieldLabel = "mb-1 block text-xs font-semibold text-slate-600";
 
-const btnPrimary = "rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300";
+const btnPrimary = "rounded-lg bg-marine-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer shadow-[0_2px_10px_rgba(58,69,216,0.25)] hover:bg-marine-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-marine-300";
 const btnSuccess = "rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white cursor-pointer hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300";
 const btnSuccessSoft = "rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 cursor-pointer hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300";
-const btnGhost = "rounded-lg px-3 py-1.5 text-sm text-slate-400 cursor-pointer hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300";
+const btnGhost = "rounded-lg px-3 py-1.5 text-sm text-slate-400 cursor-pointer hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-marine-300";
 
-export default function TaskCard({ item, busy, index = 0, late = false, onChangeStatus, onSetFrequency, onNote, onSkip, onSaveEdits }) {
+export default function TaskCard({ item, busy, index = 0, late = false, initialOpen = false, onChangeStatus, onSetFrequency, onNote, onSkip, onSaveEdits }) {
   const t = TYPE_META[item.type];
   const p = PRIORITY_META[item.priority];
   const TypeIcon = t.Icon;
   const unscheduled = item.frequency === "NeedsReview" || item.quarter === null;
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [noteOpen, setNoteOpen] = useState(false);
   const [note, setNote] = useState("");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
+  const rootRef = useRef(null);
+
+  // When the parent navigates here with a focus target, ensure the card is
+  // expanded and brought into view (after the expand animation kicks in).
+  useEffect(() => {
+    if (!initialOpen) return;
+    setOpen(true);
+    const id = window.requestAnimationFrame(() => {
+      rootRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [initialOpen]);
 
   const startEdit = () => {
     setForm({
@@ -53,17 +65,18 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
 
   return (
     <div
+      ref={rootRef}
       style={{ animationDelay: `${Math.min(index, 10) * 45}ms` }}
-      className={`animate-card-in group rounded-2xl border bg-white shadow-card transition-shadow hover:shadow-card-lg ${late ? "border-rose-200" : "border-slate-100"}`}
+      className={`animate-card-in group rounded-2xl border bg-white shadow-card transition hover:shadow-card-lg hover:border-marine-200/70 ${late ? "border-rose-200" : "border-slate-200/70"}`}
     >
       <div onClick={() => setOpen((o) => !o)} className="flex items-center gap-4 px-4 py-4 cursor-pointer">
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${t.tile}`}>
-          <TypeIcon className="h-[18px] w-[18px]" aria-hidden />
+        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${t.tile}`}>
+          <TypeIcon size={20} aria-hidden />
         </div>
 
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[15px] font-semibold leading-tight text-slate-800">{item.title}</h3>
-          <p className="truncate text-[13px] text-slate-400">{item.description}</p>
+          <h3 className="truncate font-display text-[15px] font-semibold leading-tight tracking-tight text-slate-900">{item.title}</h3>
+          <p className="truncate text-[13px] text-slate-500">{item.description}</p>
         </div>
 
         <div className="hidden items-center gap-2 text-xs font-medium sm:flex shrink-0">
@@ -101,7 +114,7 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
           onClick={(e) => { stop(e); setOpen((o) => !o); }}
           aria-expanded={open}
           aria-label={open ? "סגירת פרטים" : "הצגת פרטים"}
-          className="shrink-0 rounded-md p-1 text-slate-400 cursor-pointer hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+          className="shrink-0 rounded-md p-1 text-slate-400 cursor-pointer hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-marine-300"
         >
           <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
         </button>
@@ -164,7 +177,7 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
                 </label>
               </div>
               <div className="flex gap-2 pt-1">
-                <button type="submit" className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white cursor-pointer hover:bg-indigo-700">שמירה</button>
+                <button type="submit" className="rounded-md bg-marine-600 px-3 py-1.5 text-xs font-medium text-white cursor-pointer hover:bg-marine-700">שמירה</button>
                 <button type="button" onClick={() => setEditing(false)} className="rounded-md px-3 py-1.5 text-xs text-slate-500 cursor-pointer hover:text-slate-700">ביטול</button>
               </div>
             </form>
@@ -212,15 +225,15 @@ export default function TaskCard({ item, busy, index = 0, late = false, onChange
                 onChange={(e) => setNote(e.target.value)}
                 rows={3}
                 placeholder="כתוב הערה…"
-                className="w-full rounded-lg border border-slate-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full rounded-lg border border-slate-200 p-2 text-sm focus:outline-none focus:border-marine-400 focus:ring-[3px] focus:ring-marine-50"
               />
               <div className="mt-2 flex gap-2">
-                <button onClick={saveNote} className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white cursor-pointer hover:bg-indigo-700">שמירה</button>
+                <button onClick={saveNote} className="rounded-md bg-marine-600 px-3 py-1 text-xs font-medium text-white cursor-pointer hover:bg-marine-700">שמירה</button>
                 <button onClick={() => { setNoteOpen(false); setNote(""); }} className="rounded-md px-3 py-1 text-xs text-slate-500 cursor-pointer hover:text-slate-700">ביטול</button>
               </div>
             </div>
           ) : (
-            <button onClick={() => { setNote(item.notes || ""); setNoteOpen(true); }} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 cursor-pointer hover:text-indigo-700">
+            <button onClick={() => { setNote(item.notes || ""); setNoteOpen(true); }} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-marine-600 cursor-pointer hover:text-marine-700">
               <Plus className="h-4 w-4" aria-hidden /> {item.notes ? "ערוך הערה" : "הוסף הערה"}
             </button>
           )}

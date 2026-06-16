@@ -20,7 +20,7 @@ export function FrequencyControl({ onSelect }) {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="inline-flex items-center gap-1 rounded-md bg-amber-500 px-2.5 py-1 text-xs font-medium text-white cursor-pointer hover:bg-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+        className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1 text-xs font-medium text-white cursor-pointer shadow-[0_2px_8px_rgba(245,158,11,0.25)] hover:bg-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
       >
         קבע תדירות
         <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
@@ -45,7 +45,7 @@ export function FrequencyControl({ onSelect }) {
   );
 }
 
-export function YearSelect({ year, setYear }) {
+export function YearSelect({ year, setYear, dark = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -68,7 +68,11 @@ export function YearSelect({ year, setYear }) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label="בחירת שנה"
-        className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+        className={
+          dark
+            ? "flex w-full items-center justify-between gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 cursor-pointer hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-marine-400/50"
+            : "flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-marine-300"
+        }
       >
         <span className="font-medium">{year}</span>
         <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
@@ -86,7 +90,7 @@ export function YearSelect({ year, setYear }) {
                 aria-selected={y === year}
                 onClick={() => { setYear(y); setOpen(false); }}
                 className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-sm cursor-pointer ${
-                  y === year ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-600 hover:bg-slate-50"
+                  y === year ? "bg-marine-50 text-marine-700 font-semibold" : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 <span>{y}</span>
@@ -102,7 +106,7 @@ export function YearSelect({ year, setYear }) {
 
 const segTrack = "inline-flex items-center gap-0.5 rounded-xl bg-slate-100/80 p-1";
 const segBtn =
-  "rounded-lg px-3 py-1.5 text-sm cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300";
+  "rounded-lg px-3 py-1.5 text-sm cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-marine-300";
 const segActive = "bg-white text-slate-900 font-semibold shadow-sm";
 const segIdle = "text-slate-500 hover:text-slate-800";
 
@@ -139,7 +143,7 @@ export function Progress({ done, total }) {
         aria-valuemax={100}
         aria-label="התקדמות"
       >
-        <div className="h-full rounded-full bg-indigo-500 transition-all duration-500" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-marine-600 transition-all duration-500" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -197,7 +201,7 @@ export function TypeSelect({ value, onChange }) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label="סינון לפי סוג משימה"
-        className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+        className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-marine-300"
       >
         <span className="text-slate-400">סוג:</span>
         <span className="font-medium">{current.label}</span>
@@ -216,7 +220,7 @@ export function TypeSelect({ value, onChange }) {
                 aria-selected={f.key === value}
                 onClick={() => { onChange(f.key); setOpen(false); }}
                 className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-sm cursor-pointer ${
-                  f.key === value ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-600 hover:bg-slate-50"
+                  f.key === value ? "bg-marine-50 text-marine-700 font-semibold" : "text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 <span>{f.label}</span>
@@ -255,7 +259,7 @@ export function StatusControl({ status, busy, onChange }) {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`סטטוס: ${m.label} — לחיצה לשינוי`}
-        className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 cursor-pointer hover:bg-slate-50 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
+        className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 cursor-pointer hover:bg-slate-50 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-marine-300"
       >
         {busy ? (
           <RefreshCw className="h-3 w-3 animate-spin text-slate-400" aria-hidden />

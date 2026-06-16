@@ -1,16 +1,89 @@
 @import "tailwindcss";
 
+/* ── Marine design system ──────────────────────────────────────────────────────
+   Marine accent, soft-white canvas, Rubik display + body, 18px card radius.
+   The accent is centralized: change --color-marine-600/700 to re-theme the app.
+   ────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --font-sans: 'Rubik', system-ui, -apple-system, 'Noto Sans Hebrew', sans-serif;
+  --font-display: 'Rubik', system-ui, sans-serif;
+
+  /* Marine — the brand accent, tuned to the logo shield gradient
+     (#5A6CFF → #3A45D8 → #262A8E). Swap these to re-theme everything. */
+  --color-marine-50: #eef0ff;
+  --color-marine-100: #e0e3ff;
+  --color-marine-200: #c4caff;
+  --color-marine-300: #9da7ff;
+  --color-marine-400: #7480ff;
+  --color-marine-500: #5a6cff;
+  --color-marine-600: #3a45d8;
+  --color-marine-700: #2d34ad;
+  --color-marine-800: #262a8e;
+  --color-marine-900: #1f2270;
+
+  /* Canvas + surfaces */
+  --color-canvas: #f6f7f9;
+  --color-pop: #ffd23f;
+
+  --radius-card: 18px;
+}
+
+:root {
+  color-scheme: light;
+}
+
 html, body, #root { height: 100%; }
 body {
   margin: 0;
-  font-family: 'Rubik', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
+  letter-spacing: -0.006em;
+  background: var(--color-canvas);
+  color: #0a0c10;
+  -webkit-font-smoothing: antialiased;
 }
 
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Tailwind v4 resets <button> to the default cursor — restore the pointer on
+   clickable elements, and show not-allowed on disabled ones. */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+a[href],
+summary,
+label[for],
+select {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+/* Thin, unobtrusive scrollbars. */
+.thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: #d4d9e0;
+  border-radius: 9999px;
+}
+.thin-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* Dark variant for the navy sidebar. */
+.thin-scroll-dark::-webkit-scrollbar { width: 8px; height: 8px; }
+.thin-scroll-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+.thin-scroll-dark::-webkit-scrollbar-track { background: transparent; }
+
+/* Branded card shadows — softer, slightly tinted toward marine. */
 @utility shadow-card {
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
+  box-shadow: 0 1px 2px rgba(13, 17, 23, 0.04);
 }
 @utility shadow-card-lg {
-  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.06), 0 14px 32px rgba(16, 24, 40, 0.09);
+  box-shadow: 0 4px 16px rgba(13, 17, 23, 0.06), 0 12px 32px rgba(13, 17, 23, 0.05);
 }
 
 @keyframes card-in {
@@ -23,4 +96,20 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-card-in { animation: none; }
+}
+
+/* Sweep used on the analyzing-step scanner tile — a thin marine bar that
+   travels top-to-bottom to suggest "currently scanning". */
+@keyframes scan-sweep {
+  0%   { transform: translateY(-100%); opacity: 0.0; }
+  20%  { opacity: 0.9; }
+  80%  { opacity: 0.9; }
+  100% { transform: translateY(1600%); opacity: 0.0; }
+}
+.animate-scan-sweep {
+  animation: scan-sweep 1.6s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scan-sweep { animation: none; opacity: 0.0; }
 }

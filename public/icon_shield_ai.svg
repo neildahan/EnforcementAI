@@ -1,0 +1,39 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shield" x1="256" y1="80" x2="256" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5A6CFF"/>
+      <stop offset="0.55" stop-color="#3A45D8"/>
+      <stop offset="1" stop-color="#262A8E"/>
+    </linearGradient>
+    <linearGradient id="check" x1="200" y1="190" x2="320" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E6ECFF"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="256" cy="150" r="170" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#1B1E63" flood-opacity="0.30"/>
+    </filter>
+    <clipPath id="clip">
+      <path d="M162 116 L350 116 C358 116 364 122 364 130 L364 232 C364 318 320 366 256 404 C192 366 148 318 148 232 L148 130 C148 122 154 116 162 116 Z"/>
+    </clipPath>
+  </defs>
+
+  <path d="M162 116 L350 116 C358 116 364 122 364 130 L364 232 C364 318 320 366 256 404 C192 366 148 318 148 232 L148 130 C148 122 154 116 162 116 Z" fill="url(#shield)" filter="url(#ds)"/>
+
+  <g clip-path="url(#clip)">
+    <rect x="148" y="100" width="108" height="320" fill="#FFFFFF" opacity="0.10"/>
+    <rect x="256" y="100" width="120" height="320" fill="#000000" opacity="0.07"/>
+    <rect x="148" y="100" width="216" height="170" fill="url(#gloss)"/>
+  </g>
+
+  <path d="M190 256 L230 298 L312 204" fill="none" stroke="url(#check)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- AI sparkle -->
+  <g transform="translate(338,158)">
+    <path d="M0 -26 C0 -8 8 0 26 0 C8 0 0 8 0 26 C0 8 -8 0 -26 0 C-8 0 0 -8 0 -26 Z" fill="#FFFFFF"/>
+    <path d="M30 -40 C30 -31 34 -27 43 -27 C34 -27 30 -23 30 -14 C30 -23 26 -27 17 -27 C26 -27 30 -31 30 -40 Z" fill="#FFFFFF" opacity="0.9"/>
+  </g>
+</svg>

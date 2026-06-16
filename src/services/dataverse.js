@@ -160,10 +160,28 @@ const SEED = [
 ];
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// In-memory store for plans published through the onboarding wizard. Keyed
+// by year. Resets on page reload — fine for mock. Live impl will persist
+// via the GenerateWorkPlan flow + WorkPlanItem entity.
+const _publishedPlans = new Map(); // year → { items, publishedAt }
+
 const mock = {
   async getWorkPlanItems({ year }) {
     await wait(450);
+    const published = _publishedPlans.get(year);
+    if (published) return published.items.map((x) => ({ ...x, year }));
     return SEED.map((x) => ({ ...x, year }));
+  },
+  async getPlanMeta({ year }) {
+    await wait(120);
+    const published = _publishedPlans.get(year);
+    if (published) return { published: true, publishedAt: published.publishedAt, total: published.items.length };
+    return { published: false, publishedAt: null, total: 0 };
+  },
+  async publishWorkPlan({ year, items }) {
+    await wait(400);
+    _publishedPlans.set(year, { items, publishedAt: new Date().toISOString() });
+    return { ok: true, count: items.length };
   },
   async updateItemStatus(id, status) {
     await wait(250);
@@ -255,6 +273,19 @@ const live = {
     return items
       .map((it) => fromDataverse(it, cById[it._hl_controlref_value] ?? {}, pById[it._hl_workplanref_value] ?? {}))
       .filter((x) => year == null || x.year == null || x.year === year);
+  },
+
+  // Live impl: derive from whether any WorkPlanItem exists for the year. Real
+  // wiring lands when the GenerateWorkPlan flow exposes publish metadata.
+  async getPlanMeta({ year }) {
+    const items = await this.getWorkPlanItems({ year });
+    return { published: items.length > 0, publishedAt: null, total: items.length };
+  },
+
+  // Live impl placeholder — real publish goes through the GenerateWorkPlan
+  // Power Automate flow with the picked candidates as input. Stub for now.
+  async publishWorkPlan({ year, items }) {
+    throw new Error("publishWorkPlan: not implemented in live mode yet");
   },
 
   async updateItemStatus(id, status) {

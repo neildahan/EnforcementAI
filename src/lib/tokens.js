@@ -1,13 +1,34 @@
+import { createElement } from "react";
 import {
-  LayoutDashboard, ClipboardList, ClipboardCheck, BarChart3, ShieldCheck,
-  FileEdit, AlertTriangle, Bell, Settings, GraduationCap, FileText,
+  LayoutDashboard, ClipboardList, ClipboardCheck, BarChart3,
+  FileEdit, AlertTriangle, Bell as BellLucide, Settings,
 } from "lucide-react";
+import {
+  GraduationCap as PhGraduationCap,
+  ShieldCheck as PhShieldCheck,
+  Bell as PhBell,
+  FileText as PhFileText,
+} from "@phosphor-icons/react";
+
+// Content icons render in Phosphor's "duotone" weight — a softer, branded
+// two-tone look (vs. flat single-stroke). Chrome icons (nav, chevrons) stay
+// on Lucide so the contrast keeps the layout calm.
+const ICON_WEIGHT = "duotone";
+const ph = (PhosphorIcon) =>
+  function Icon(props) {
+    return createElement(PhosphorIcon, { weight: ICON_WEIGHT, ...props });
+  };
+
+// One accent for all task types: marine tile + duotone icon. The icon shape
+// carries the type meaning; color isn't doing extra work, so the page reads
+// as a product instead of a multicolored AI dashboard.
+const TYPE_TILE = "bg-marine-50 text-marine-600";
 
 export const TYPE_META = {
-  training: { label: "הדרכה", dot: "text-violet-500", Icon: GraduationCap, tile: "bg-violet-50 text-violet-600" },
-  control:  { label: "בקרה",  dot: "text-blue-500",   Icon: ShieldCheck,   tile: "bg-blue-50 text-blue-600" },
-  reminder: { label: "תזכורת", dot: "text-amber-500",  Icon: Bell,          tile: "bg-amber-50 text-amber-600" },
-  report:   { label: "דוח",   dot: "text-emerald-500", Icon: FileText,      tile: "bg-emerald-50 text-emerald-600" },
+  training: { label: "הדרכה",  dot: "text-marine-500", Icon: ph(PhGraduationCap), tile: TYPE_TILE },
+  control:  { label: "בקרה",   dot: "text-marine-500", Icon: ph(PhShieldCheck),   tile: TYPE_TILE },
+  reminder: { label: "תזכורת", dot: "text-marine-500", Icon: ph(PhBell),          tile: TYPE_TILE },
+  report:   { label: "דוח",    dot: "text-marine-500", Icon: ph(PhFileText),      tile: TYPE_TILE },
 };
 
 export const PRIORITY_META = {
@@ -44,21 +65,35 @@ export const TYPE_FILTERS = [
   { key: "report", label: "דוח" },
 ];
 
+// Nav groups. `active` is derived from the current view in the Sidebar.
+// `enabled` marks which keys actually route somewhere today; the others are
+// rendered as placeholders so the menu reflects the full surface but the user
+// can't navigate to dead screens.
 export const NAV = [
   { section: "תכנון ובקרה", items: [
-    { key: "dash", label: "לוח בקרה", Icon: LayoutDashboard },
-    { key: "tasks", label: "משימות אכיפה", Icon: ClipboardList, active: true },
-    // Hidden for now — restore as the screens come online:
-    // { key: "plan", label: "תוכנית עבודה", Icon: ClipboardCheck },
-    // { key: "subjects", label: "נושאי בקרה", Icon: BarChart3 },
-    // { key: "check", label: "בדיקת ציות", Icon: ShieldCheck },
+    { key: "dash",     label: "לוח בקרה",       Icon: LayoutDashboard, enabled: true  },
+    { key: "tasks",    label: "משימות אכיפה",   Icon: ClipboardList,   enabled: true  },
+    { key: "plan",     label: "תוכנית עבודה",   Icon: ClipboardCheck,  enabled: true  },
+    { key: "subjects", label: "נושאי בקרה",     Icon: BarChart3,       enabled: true  },
   ]},
-  // { section: "דיווח", items: [
-  //   { key: "report", label: "דוח בקרה", Icon: FileEdit },
-  //   { key: "gaps", label: "מעקב ליקויים", Icon: AlertTriangle },
-  //   { key: "alerts", label: "תזכורות", Icon: Bell },
-  // ]},
-  // { section: "הגדרות", items: [
-  //   { key: "setup", label: "הגדרה ראשונית", Icon: Settings },
-  // ]},
+  { section: "דיווח", items: [
+    { key: "report",   label: "דוח בקרה",       Icon: FileEdit,        enabled: false },
+    { key: "gaps",     label: "מעקב ליקויים",   Icon: AlertTriangle,   enabled: false },
+    { key: "alerts",   label: "תזכורות",        Icon: BellLucide,      enabled: false },
+  ]},
+  { section: "הגדרות", items: [
+    { key: "setup",    label: "הגדרה ראשונית",  Icon: Settings,        enabled: true  },
+  ]},
+];
+
+// Flat module list for the dashboard's "מודולי המערכת" grid — every screen
+// the product exposes, with a one-line description. Keys match NAV keys.
+export const MODULES = [
+  { key: "tasks",    title: "משימות אכיפה",    desc: "תוכנית עבודה רבעונית — הדרכות, בקרות, תזכורות ודוחות" },
+  { key: "plan",     title: "תוכנית עבודה",    desc: "הפקת תוכנית עבודה שנתית מתוך סקר הציות ותוכנית האכיפה" },
+  { key: "subjects", title: "נושאי בקרה",      desc: "הצעת נושאים לבדיקה רבעונית לפי דירוג הסיכון השיורי" },
+  { key: "report",   title: "דוח בקרה",        desc: "ריכוז ממצאי הרבעון והפקת דוח בקרה פנימי מובנה" },
+  { key: "gaps",     title: "מעקב ליקויים",    desc: "רישום, מעקב וסגירה של ליקויים שזוהו בבקרה" },
+  { key: "alerts",   title: "תזכורות",         desc: "התראות על חלונות שתיקה, הדרכות ויעדים מתקרבים" },
+  { key: "setup",    title: "הגדרה ראשונית",   desc: "העלאת סקר ציות ותוכנית אכיפה למיפוי בקרות ראשוני" },
 ];
